@@ -1,0 +1,26 @@
+node
+{
+    def mavenHome= tool name : "maven 3.8.4"
+    properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '2', numToKeepStr: '5')), pipelineTriggers([pollSCM('* * * * *')])])
+stage ('checkout code')
+{
+    git credentialsId: '85a15aad-b385-42f4-92df-a622d84a99cd', url: 'https://github.com/dineshDevopspractice/maven-web-application'
+ 
+}
+stage('Build')
+{
+   sh "${mavenHome}/bin/mvn clean package " 
+}
+stage('Upload artifacts into nexus')
+{
+   sh "${mavenHome}/bin/mvn deploy"    
+}
+stage('Deploy app into Tomcat')
+{
+sshagent(['398a5b25-e85e-4ef6-ad24-ec34d59a3a8e']) {
+   
+sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@13.232.24.100:/opt/apache-tomcat-9.0.58/webapps/"
+}
+}
+    
+}
